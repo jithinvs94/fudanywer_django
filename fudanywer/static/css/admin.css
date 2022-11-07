@@ -1,0 +1,64 @@
+#header {
+    height: 50px;
+    background: #c33332;
+    color: #fff;
+}
+
+#branding h1 {
+    font-size: 25px;
+    font-weight: bold;
+    color: #282C35 ;
+}
+
+a:link,
+a:visited{
+    color: #8E8B8A;
+}
+
+div.breadcrumbs {
+    background: #282C35;
+    color: #fff;
+}
+
+div.breadcrumbs a {
+    color: #fff;
+}
+
+.module h2, .module caption, .inline-group h2 {
+    background: #282C35;
+}
+
+input[type=submit]:active, input[type=button]:active, .button:focus, input[type=submit]:focus, input[type=button]:focus, .button:hover, input[type=submit]:hover, input[type=button]:hover{
+    background: #c33332;
+    color: #fff;
+}
+
+input[type="submit"], button {
+    background: #282C35;
+    color: #fff;
+}
+
+.button.default, input[type=submit].default, .submit-row input.default {
+    background: #282C35;
+    color: #fff;
+}
+
+input[type=submit].default, .submit-row input.default {
+    background: #c33332;
+    color: #fff;
+} 
+
+:root {
+    --selected-row: #c33332;
+}
+
+#nav-sidebar .current-app .section:link, #nav-sidebar .current-app .section:visited {
+    color: #fff;
+}
+
+
+
+
+
+
+
