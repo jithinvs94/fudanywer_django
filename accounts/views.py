@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from vendor.models import Vendor
+from django.template.defaultfilters import slugify
 
 # Create your views here.
 
@@ -87,17 +88,19 @@ def registerVendor(request):
             user = User.objects.create_user(first_name=first_name, last_name=last_name, username=username, email=email, password=password)
             user.role = User.VENDOR
             user.save()
+            vendor = v_form.save(commit=False)
+            vendor.user = user
+            vendor_name = v_form.cleaned_data['vendor_name']
+            vendor.vendor_slug = slugify(vendor_name)+'-'+str(user.id)
+            user_profile = UserProfile.objects.get(user=user)
+            vendor.user_profile = user_profile
+            vendor.save()
 
             # SEND EMAIL
             mail_subject = 'Please activate your account'
             email_template = 'accounts/emails/account_verification_email.html'
             send_verification_email(request, user, mail_subject, email_template)
 
-            vendor = v_form.save(commit=False)
-            vendor.user = user
-            user_profile = UserProfile.objects.get(user=user)
-            vendor.user_profile = user_profile
-            vendor.save()
             messages.success(request, 'Your account has been registered successfully! Please wait for the approval.')
             return redirect('registerVendor')
         else:
