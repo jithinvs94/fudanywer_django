@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from vendor.models import Vendor
+from vendor.models import Vendor, OpeningHour
 from menu.models import Category,FoodItem
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Prefetch, Q
@@ -10,11 +10,36 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.measure import D
 from django.contrib.gis.db.models.functions import Distance
+from datetime import date
 
 
 # Create your views here.
+
+def get_or_set_current_location(request):
+    if 'lat' in request.GET:
+        lat = request.GET.get('lat')
+        lng = request.GET.get('lng')
+        request.session['lat'] = lat
+        request.session['lng'] = lng
+        return lng, lat
+    elif 'lat' in request.session:
+        lat = request.session['lat']
+        lng = request.session['lng']
+        return lng, lat
+    else:
+        return None
+
 def marketplace(request):
-    vendors = Vendor.objects.filter(is_approved=True, user__is_active=True)
+    if get_or_set_current_location(request) is not None:
+
+        pnt = GEOSGeometry('POINT(%s %s)' % (get_or_set_current_location(request)))
+
+        vendors = Vendor.objects.filter(user_profile__location__distance_lte=(pnt, D(km=1000))).annotate(distance=Distance("user_profile__location", pnt)).order_by("distance")
+
+        for v in vendors:
+            v.kms = round(v.distance.km, 1)
+    else:
+        vendors = Vendor.objects.filter(is_approved=True, user__is_active=True)[:20]
     vendor_count = vendors.count()
     context = {
         'vendors': vendors,
@@ -33,13 +58,13 @@ def vendor_detail(request, vendor_slug):
         )
     )
 
-    # opening_hours = OpeningHour.objects.filter(vendor=vendor).order_by('day', 'from_hour')
+    opening_hours = OpeningHour.objects.filter(vendor=vendor).order_by('day', '-from_hour')
     
-    # # Check current day's opening hours.
-    # today_date = date.today()
-    # today = today_date.isoweekday()
+    # Check current day's opening hours.
+    today_date = date.today()
+    today = today_date.isoweekday()
     
-    # current_opening_hours = OpeningHour.objects.filter(vendor=vendor, day=today)
+    current_opening_hours = OpeningHour.objects.filter(vendor=vendor, day=today)
     if request.user.is_authenticated:
         cart_items = Cart.objects.filter(user=request.user)
     else:
@@ -48,8 +73,8 @@ def vendor_detail(request, vendor_slug):
         'vendor': vendor,
         'categories': categories,
         'cart_items': cart_items,
-        # 'opening_hours': opening_hours,
-        # 'current_opening_hours': current_opening_hours,
+        'opening_hours': opening_hours,
+        'current_opening_hours': current_opening_hours,
     }
     return render(request, 'marketplace/vendor_detail.html', context)
 
