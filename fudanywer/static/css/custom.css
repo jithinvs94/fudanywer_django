@@ -36,7 +36,7 @@ table > tbody > tr > td{
 }
 
 /* hide radio button */
-/* .payment-method [type=radio]{
+.payment-method [type=radio]{
     position: absolute;
     opacity: 0;
     width: 0;
@@ -84,4 +84,4 @@ table > tbody > tr > td{
 
 table td, table th{
     line-height: 1rem !important;
-} */
+}
