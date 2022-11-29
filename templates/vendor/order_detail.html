@@ -23,35 +23,36 @@
                                 <div class="justify-content-center row">
                                     <div class="col-md-12">
                                         <div class="bg-white p-1">
-                                            <img src="{% static 'logo/foodOnlineLogo.png' %}" alt="foodOnline Logo" width="300">
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <h4 class="mt-2 mb-3">Thank you for your order.</h4>
+                                                    <h4 class="mt-2 mb-3">Order Details</h4>
                                                 </div>
-                                                <div class="col-md-6 text-right">
-                                                    <p class="mb-0">{{ order.name }}</p>
+                                                <div class="col-md-6 text-left">
+                                                    <p class="mb-0" style="text-transform: capitalize;">{{ order.name }}</p>
                                                     <p class="mb-0">{{ order.address }}</p>
                                                     <p class="mb-0">{{ order.phone }}</p>
                                                     <p class="mb-0">{{ order.email }}</p>
                                                 </div>
                                             </div>
                                             
-                                            <h6>Hello {{ order.name }}, </h6><span>Review your order details below.</span>
+                                            
                                             <hr>
                             
-                                            <div class="d-flex justify-content-between">
+                                            <div class="row">
+                                            <div class="col-md-12 text-left">
                                                 <div>
-                                                    <span class="d-block">Order Date: </span><span class="font-weight-bold">{{ order.created_at }}</span>
+                                                    <span class="d-block">Order Date: &nbsp&nbsp<span class="font-weight-bold">{{ order.created_at }}</span></span>
                                                 </div>
                                                 <div>
-                                                    <span class="d-block">Order No: </span><span class="font-weight-bold">{{ order.order_number }}</span>
+                                                    <span class="d-block">Order No: &nbsp&nbsp<span class="font-weight-bold">{{ order.order_number }}</span></span>
                                                 </div>
                                                 <div>
-                                                    <span class="d-block">Payment Method: </span><span class="font-weight-bold">{{ order.payment_method }}</span>
+                                                    <span class="d-block">Payment Method: &nbsp&nbsp<span class="font-weight-bold">{{ order.payment_method }}</span></span>
                                                 </div>
                                                 <div>
-                                                    <span class="d-block">Transaction ID: </span><span class="font-weight-bold">{{ order.payment.transaction_id }}</span>
+                                                    <span class="d-block">Transaction ID: &nbsp&nbsp<span class="font-weight-bold">{{ order.payment.transaction_id }}</span></span>
                                                 </div>
+                                            </div>
                                             </div>
                                             <hr>
                                             <table class="table">
@@ -72,7 +73,7 @@
                             
                                             <div class="row mt-5">
                                                 <div class="d-flex justify-content-center col-md-6">
-                                                    <img src="{% static 'images/paid.png' %}" width="200">
+                                                    <img src="{% static 'images/paid2.png' %}" width="200">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <ul>
@@ -110,7 +111,7 @@
                                             <hr>
                                             <div class="d-flex justify-content-between">
                                                 <div>
-                                                    <span class="d-block font-weight-bold">Thanks for ordering with us.</span>
+                                                    <span class="d-block font-weight-bold">Thank you for being our partner.</span>
                                                     <span>FoodOnline Team</span>
                                                 </div>
                                                 <div class="d-flex justify-content-end align-items-end">

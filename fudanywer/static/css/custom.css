@@ -63,7 +63,6 @@ table > tbody > tr > td{
     .main-search-bar{
         padding-top: 100px !important;
         padding-bottom: 50px !important;
-        background-position: left !important;
     }
     .user-dashboard{
         width: 100% !important;
@@ -84,4 +83,12 @@ table > tbody > tr > td{
 
 table td, table th{
     line-height: 1rem !important;
+}
+
+.main-search.fancy .field-holder input[type="submit"] {
+    background-color: #fd5240 !important;
+}
+
+.main-search.fancy.bg-holder{
+    background-color: #fd5240 !important;
 }
