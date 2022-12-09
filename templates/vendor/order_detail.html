@@ -26,6 +26,15 @@
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <h4 class="mt-2 mb-3">Order Details</h4>
+                                                    {% if order.status == 'New' %}
+                                                    <a onclick="return acceptConfirm();" href="#" id = "accept" data-url="{% url 'accept_order' order.order_number %}" class="btn btn-success accept_order">Accept</a>
+                                                    <a onclick="return rejectConfirm();" href="#" id = "reject" data-url="{% url 'reject_order' order.order_number %}" class="btn btn-danger reject_order">Reject</a>
+                                                    {% elif order.status == 'Accepted' %}
+                                                    <a onclick="return completedConfirm();" href="#" id = "complete" data-url="{% url 'complete_order' order.order_number %}" class="btn btn-success complete_order">Mark as completed</a>
+                                                    {% else %}
+                                                    <b>{{order.status}}</b>
+                                                    {% endif %}
+                                                    <b id="new_status"></b>
                                                 </div>
                                                 <div class="col-md-6 text-left">
                                                     <p class="mb-0" style="text-transform: capitalize;">{{ order.name }}</p>
@@ -46,12 +55,7 @@
                                                 <div>
                                                     <span class="d-block">Order No: &nbsp&nbsp<span class="font-weight-bold">{{ order.order_number }}</span></span>
                                                 </div>
-                                                <div>
-                                                    <span class="d-block">Payment Method: &nbsp&nbsp<span class="font-weight-bold">{{ order.payment_method }}</span></span>
-                                                </div>
-                                                <div>
-                                                    <span class="d-block">Transaction ID: &nbsp&nbsp<span class="font-weight-bold">{{ order.payment.transaction_id }}</span></span>
-                                                </div>
+                                                
                                             </div>
                                             </div>
                                             <hr>
@@ -73,7 +77,7 @@
                             
                                             <div class="row mt-5">
                                                 <div class="d-flex justify-content-center col-md-6">
-                                                    <img src="{% static 'images/paid2.png' %}" width="200">
+                                                    <img src="{% static 'images/ordered.png' %}" width="200">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <ul>
@@ -102,7 +106,7 @@
                                                             TOTAL
                                                             <span class="price float-right">
                                                                 <span class="currency">₹</span>
-                                                                <span id="total">{{ grand_total }}</span>
+                                                                <span id="total">{{ order.total }}</span>
                                                             </span>
                                                         </li>
                                                     </ul>
@@ -112,7 +116,7 @@
                                             <div class="d-flex justify-content-between">
                                                 <div>
                                                     <span class="d-block font-weight-bold">Thank you for being our partner.</span>
-                                                    <span>FoodOnline Team</span>
+                                                    <span>FudAnyWer Team</span>
                                                 </div>
                                                 <div class="d-flex justify-content-end align-items-end">
                                                     <span class="d-block font-weight-bold">Need help?</span>&nbsp
@@ -133,5 +137,59 @@
 </div>
 <!-- Main Section End -->
 
+<script>
+    function acceptConfirm(){
+        // var payMethod = $("input[name='payment_method']:checked").val()
+        // if(!payMethod){
+        //     $('#payment-method-error').html("Select Payment Method!");
+        //     return false;
+        // }else{
+        // var conf = confirm('You have selected '+payMethod+' as your preferred payment method.\nClick "OK" to continue.')
+        var conf = confirm('Are you sure you want to accept the order.\nClick "OK" to continue.')
+        if(conf == true){
+            return true;
+        }else{
+            return false;
+        }
+        // }
+        
+    }
+
+    // $('input[name=payment_method]').on('change', function(){
+    //     $('#payment-method-error').html("");
+    // })
+    function rejectConfirm(){
+        // var payMethod = $("input[name='payment_method']:checked").val()
+        // if(!payMethod){
+        //     $('#payment-method-error').html("Select Payment Method!");
+        //     return false;
+        // }else{
+        // var conf = confirm('You have selected '+payMethod+' as your preferred payment method.\nClick "OK" to continue.')
+        var conf = confirm('Are you sure you want to reject the order.\nClick "OK" to continue.')
+        if(conf == true){
+            return true;
+        }else{
+            return false;
+        }
+        // }
+        
+    }
+    function completedConfirm(){
+        // var payMethod = $("input[name='payment_method']:checked").val()
+        // if(!payMethod){
+        //     $('#payment-method-error').html("Select Payment Method!");
+        //     return false;
+        // }else{
+        // var conf = confirm('You have selected '+payMethod+' as your preferred payment method.\nClick "OK" to continue.')
+        var conf = confirm('Are you sure.\nClick "OK" to continue.')
+        if(conf == true){
+            return true;
+        }else{
+            return false;
+        }
+        // }
+        
+    }
+</script>
 
 {% endblock %}

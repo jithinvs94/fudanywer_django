@@ -5,14 +5,15 @@ from marketplace.models import Cart, Tax
 from marketplace.context_processors import get_cart_amounts
 from menu.models import FoodItem
 from .forms import OrderForm
-from .models import Order, OrderedFood, Payment
+from .models import Order, OrderedFood
 import simplejson as json
-from .utils import generate_order_number, order_total_by_vendor
+from .utils import generate_order_number
 from accounts.utils import send_notification
 from django.contrib.auth.decorators import login_required
 import razorpay
 from fudanywer.settings import RZP_KEY_ID, RZP_KEY_SECRET
 from django.contrib.sites.shortcuts import get_current_site
+from vendor.models import Vendor
 
 
 
@@ -58,179 +59,208 @@ def place_order(request):
         # Construct total data
         total_data.update({fooditem.vendor.id: {str(subtotal): str(tax_dict)}})
     
-
-        
-
-    subtotal = get_cart_amounts(request)['subtotal']
-    total_tax = get_cart_amounts(request)['tax']
-    grand_total = get_cart_amounts(request)['grand_total']
-    tax_data = get_cart_amounts(request)['tax_dict']
-    
+    order_numbers = []
     if request.method == 'POST':
         form = OrderForm(request.POST)
         if form.is_valid():
-            order = Order()
-            order.first_name = form.cleaned_data['first_name']
-            order.last_name = form.cleaned_data['last_name']
-            order.phone = form.cleaned_data['phone']
-            order.email = form.cleaned_data['email']
-            order.address = form.cleaned_data['address']
-            order.country = form.cleaned_data['country']
-            order.state = form.cleaned_data['state']
-            order.city = form.cleaned_data['city']
-            order.pin_code = form.cleaned_data['pin_code']
-            order.user = request.user
-            order.total = grand_total
-            order.tax_data = json.dumps(tax_data)
-            order.total_data = json.dumps(total_data)
-            order.total_tax = total_tax
-            order.payment_method = request.POST['payment_method']
-            order.save() # order id/ pk is generated
-            order.order_number = generate_order_number(order.id)
-            order.vendors.add(*vendors_ids)
-            order.save()
+            for key1, val1 in total_data.items():
+                order = Order()
+                order.first_name = form.cleaned_data['first_name']
+                order.last_name = form.cleaned_data['last_name']
+                order.phone = form.cleaned_data['phone']
+                order.email = form.cleaned_data['email']
+                order.address = form.cleaned_data['address']
+                order.country = form.cleaned_data['country']
+                order.state = form.cleaned_data['state']
+                order.city = form.cleaned_data['city']
+                order.pin_code = form.cleaned_data['pin_code']
+                order.user = request.user
+                tax = 0
+                for key, val in val1.items():
+                    subtotal = float(key)
+                    order.tax_data = json.dumps(val)
+                    val = val.replace("'", '"')
+                    val = json.loads(val)
+                    for i in val:
+                        for j in val[i]:
+                            tax += float(val[i][j])
+                
+                order.total = subtotal + tax
+                order.total_tax = tax
+                order.save() # order id/ pk is generated
+                order.order_number = generate_order_number(order.id)
+                order_numbers.append(generate_order_number(order.id))
+                order.vendor = Vendor.objects.get(pk=key1)
+                order.is_ordered = True
+                order.save()
+                # MOVE THE CART ITEMS TO ORDERED FOOD MODEL
+                for item in cart_items:
+                    if item.fooditem.vendor == order.vendor:
+                        ordered_food = OrderedFood()
+                        ordered_food.order = order
+                        ordered_food.user = request.user
+                        ordered_food.fooditem = item.fooditem
+                        ordered_food.quantity = item.quantity
+                        ordered_food.price = item.fooditem.price
+                        ordered_food.amount = item.fooditem.price * item.quantity # total amount
+                        ordered_food.save()
+                # SEND ORDER RECEIVED EMAIL TO THE VENDOR
+                mail_subject = 'You have received a new order.'
+                mail_template = 'orders/new_order_received.html'
+                to_email = []
+                to_email.append(order.vendor.user.email)
+                tx_dt = json.loads(order.tax_data)
+                tx_dt = tx_dt.replace("'", '"')
+                tax_data = json.loads(tx_dt)
+                vendor_grand_total = order.total
 
-            # RazorPay Payment
-            DATA = {
-                "amount": float(order.total) * 100,
-                "currency": "INR",
-                "receipt": "receipt #"+order.order_number,
-                "notes": {
-                    "key1": "value3",
-                    "key2": "value2"
-                }
-            }
-            rzp_order = client.order.create(data=DATA)
-            rzp_order_id = rzp_order['id']
+                ordered_food = OrderedFood.objects.filter(order=order)
 
-            context = {
-                'order': order,
-                'cart_items': cart_items,
-                'rzp_order_id': rzp_order_id,
-                'RZP_KEY_ID': RZP_KEY_ID,
-                'rzp_amount': float(order.total) * 100,
-            }
-            return render(request, 'orders/place_order.html', context)
-
+                
+                context = {
+                    'order': order,
+                    'to_email': to_email,
+                    'ordered_food_to_vendor': ordered_food,
+                    'domain': get_current_site(request),
+                    'vendor_subtotal': subtotal,
+                    'tax_data': tax_data,
+                    'vendor_grand_total': vendor_grand_total,
+                    }
+                send_notification(mail_subject, mail_template, context)
+            cart_items.delete() 
         else:
             print(form.errors)
-    return render(request, 'orders/place_order.html')
 
-
-@login_required(login_url='login')
-def payments(request):
-        # Check if the request is ajax or not
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'POST':
-        # STORE THE PAYMENT DETAILS IN THE PAYMENT MODEL
-        order_number = request.POST.get('order_number')
-        transaction_id = request.POST.get('transaction_id')
-        payment_method = request.POST.get('payment_method')
-        status = request.POST.get('status')
-
-        order = Order.objects.get(user=request.user, order_number=order_number)
-        payment = Payment(
-            user = request.user,
-            transaction_id = transaction_id,
-            payment_method = payment_method,
-            amount = order.total,
-            status = status
-        )
-        payment.save()
-
-        # UPDATE THE ORDER MODEL
-        order.payment = payment
-        order.is_ordered = True
-        order.save()
-
-        # MOVE THE CART ITEMS TO ORDERED FOOD MODEL
-        cart_items = Cart.objects.filter(user=request.user)
-        for item in cart_items:
-            ordered_food = OrderedFood()
-            ordered_food.order = order
-            ordered_food.payment = payment
-            ordered_food.user = request.user
-            ordered_food.fooditem = item.fooditem
-            ordered_food.quantity = item.quantity
-            ordered_food.price = item.fooditem.price
-            ordered_food.amount = item.fooditem.price * item.quantity # total amount
-            ordered_food.save()
+    
+    try:  
+        grand_subtotal = 0
+        ordered_foods = []
+        tax_data = {}
+        total_tax = 0
+        for order_number in order_numbers:
+            order = Order.objects.get(order_number=order_number, is_ordered=True)
+            ordered_food = OrderedFood.objects.filter(order=order)
+            ordered_foods.append(ordered_food)
+            vendor_subtotal = 0
+            for item in ordered_food:
+                vendor_subtotal += (item.price * item.quantity)
+                grand_subtotal += (item.price * item.quantity)
+            if tax_data == {}:
+                for i in get_tax:
+                    tax_type = i.tax_type
+                    tax_percentage = i.tax_percentage
+                    tax_amount = round((float(tax_percentage) * float(vendor_subtotal))/100, 2)
+                    total_tax = float(tax_amount) + float(total_tax)
+                    tax_data.update({tax_type: {str(tax_percentage) : str(tax_amount)}})  
+            else:
+                for i in get_tax:
+                    tax_type = i.tax_type
+                    tax_percentage = i.tax_percentage
+                    tax_amount = round((float(tax_percentage) * float(vendor_subtotal))/100, 2)
+                    ex_tax = float(tax_data[tax_type][str(tax_percentage)])
+                    ex_tax += float(tax_amount)
+                    total_tax += float(tax_amount)
+                    tax_data[tax_type][str(tax_percentage)] = str(ex_tax)
+        total_amount = total_tax + grand_subtotal
 
         # SEND ORDER CONFIRMATION EMAIL TO THE CUSTOMER
         mail_subject = 'Thank you for ordering with us.'
         mail_template = 'orders/order_confirmation_email.html'
 
-        ordered_food = OrderedFood.objects.filter(order=order)
-        customer_subtotal = 0
-        for item in ordered_food:
-            customer_subtotal += (item.price * item.quantity)
-        tax_data = json.loads(order.tax_data)
         context = {
             'user': request.user,
             'order': order,
             'to_email': order.email,
-            'ordered_food': ordered_food,
+            'order_numbers': order_numbers,
+            'ordered_foods': ordered_foods,
             'domain': get_current_site(request),
-            'customer_subtotal': customer_subtotal,
+            'grand_subtotal': grand_subtotal,
             'tax_data': tax_data,
+            'totals': total_amount,
         }
         send_notification(mail_subject, mail_template, context)
-        
 
-        # SEND ORDER RECEIVED EMAIL TO THE VENDOR
-        mail_subject = 'You have received a new order.'
-        mail_template = 'orders/new_order_received.html'
-        to_emails = []
-        for i in cart_items:
-            if i.fooditem.vendor.user.email not in to_emails:
-                to_emails.append(i.fooditem.vendor.user.email)
-
-                ordered_food_to_vendor = OrderedFood.objects.filter(order=order, fooditem__vendor=i.fooditem.vendor)
-                # print(ordered_food_to_vendor)
-
-        
-                context = {
-                    'order': order,
-                    'to_email': i.fooditem.vendor.user.email,
-                    'ordered_food_to_vendor': ordered_food_to_vendor,
-                    'domain': get_current_site(request),
-                    'vendor_subtotal': order_total_by_vendor(order, i.fooditem.vendor.id)['subtotal'],
-                    'tax_data': order_total_by_vendor(order, i.fooditem.vendor.id)['tax_dict'],
-                    'vendor_grand_total': order_total_by_vendor(order, i.fooditem.vendor.id)['grand_total'],
-                }
-                send_notification(mail_subject, mail_template, context)
-
-        # CLEAR THE CART IF THE PAYMENT IS SUCCESS
-        cart_items.delete() 
-
-        # RETURN BACK TO AJAX WITH THE STATUS SUCCESS OR FAILURE
-        response = {
-            'order_number': order_number,
-            'transaction_id': transaction_id,
-        }
-        return JsonResponse(response)
-    return HttpResponse('Payments view')
-
-
-def order_complete(request):
-    order_number = request.GET.get('order_no')
-    transaction_id = request.GET.get('trans_id')
-
-    try:
-        order = Order.objects.get(order_number=order_number, payment__transaction_id=transaction_id, is_ordered=True)
-        ordered_food = OrderedFood.objects.filter(order=order)
-
-        subtotal = 0
-        for item in ordered_food:
-            subtotal += (item.price * item.quantity)
-
-        tax_data = json.loads(order.tax_data)
-        print(tax_data)
         context = {
             'order': order,
-            'ordered_food': ordered_food,
-            'subtotal': subtotal,
+            'order_numbers': order_numbers,
+            'ordered_foods': ordered_foods,
+            'grand_subtotal': grand_subtotal,
             'tax_data': tax_data,
+            'totals': total_amount,
         }
         return render(request, 'orders/order_complete.html', context)
     except:
         return redirect('home')
+
+
+def accept_order(request, order_number):
+    if request.user.is_authenticated:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            try:
+                order = Order.objects.get(order_number=order_number)
+                order.status="Accepted"
+                order.save()
+                return JsonResponse({'status': 'Success', 'message': 'Accepted', 'new_status': 'Accepted'})
+            except:
+                return JsonResponse({'status': 'Failed', 'message': 'This order does not exist!'})
+        else:
+            return JsonResponse({'status': 'Failed', 'message': 'Invalid request!'})
+    else:
+        return JsonResponse({'status': 'login_required', 'message': 'Please login to continue'})
+
+
+
+def reject_order(request, order_number):
+    if request.user.is_authenticated:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            try:
+                order = Order.objects.get(order_number=order_number)
+                order.status="Rejected"
+                order.save()
+                return JsonResponse({'status': 'Success', 'message': 'Rejected', 'new_status': 'Rejected'})
+            except:
+                return JsonResponse({'status': 'Failed', 'message': 'This order does not exist!'})
+        else:
+            return JsonResponse({'status': 'Failed', 'message': 'Invalid request!'})
+    else:
+        return JsonResponse({'status': 'login_required', 'message': 'Please login to continue'})
+        
+
+
+def complete_order(request, order_number):
+    if request.user.is_authenticated:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            try:
+                order = Order.objects.get(order_number=order_number)
+                order.status="Completed"
+                order.save()
+                return JsonResponse({'status': 'Success', 'message': 'Completed', 'new_status': 'Completed'})
+            except:
+                return JsonResponse({'status': 'Failed', 'message': 'This order does not exist!'})
+        else:
+            return JsonResponse({'status': 'Failed', 'message': 'Invalid request!'})
+    else:
+        return JsonResponse({'status': 'login_required', 'message': 'Please login to continue'})
+        
+
+
+def cancel_order(request, order_number):
+    if request.user.is_authenticated:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            try:
+                order = Order.objects.get(order_number=order_number)
+                order.status="Cancelled"
+                order.save()
+                return JsonResponse({'status': 'Success', 'message': 'Cancelled', 'new_status': 'Cancelled'})
+            except:
+                return JsonResponse({'status': 'Failed', 'message': 'This order does not exist!'})
+        else:
+            return JsonResponse({'status': 'Failed', 'message': 'Invalid request!'})
+    else:
+        return JsonResponse({'status': 'login_required', 'message': 'Please login to continue'})
+        
+
+
+
+
+   

@@ -150,7 +150,7 @@
                                             </li>
 
                                             <!-- Select payment method -->
-                                            <h5>SELECT PAYMENT METHOD</h5>
+                                            <!-- <h5>SELECT PAYMENT METHOD</h5>
                                             <div class="payment-method">
                                                 <label>
                                                     <input type="radio" name="payment_method" value="PayPal">
@@ -161,8 +161,8 @@
                                                     <input type="radio" name="payment_method" value="RazorPay">
                                                     <img src="{% static 'images/razorpay_logo.png' %}" alt="RazorPay" width="100">
                                                 </label>
-                                            </div>
-                                            <span class="text-danger" id="payment-method-error"></span>
+                                            </div> -->
+                                            <!-- <span class="text-danger" id="payment-method-error"></span> -->
                                             <!-- Select payment method -->
 
                                             <button onclick="return payMethodConfirm();" type="submit" class="btn btn-danger w-100 p-2 mt-3">PLACE ORDER</button>
@@ -189,24 +189,25 @@
 
 <script>
     function payMethodConfirm(){
-        var payMethod = $("input[name='payment_method']:checked").val()
-        if(!payMethod){
-            $('#payment-method-error').html("Select Payment Method!");
-            return false;
+        // var payMethod = $("input[name='payment_method']:checked").val()
+        // if(!payMethod){
+        //     $('#payment-method-error').html("Select Payment Method!");
+        //     return false;
+        // }else{
+        // var conf = confirm('You have selected '+payMethod+' as your preferred payment method.\nClick "OK" to continue.')
+        var conf = confirm('Are you sure you want to place order.\nClick "OK" to continue.')
+        if(conf == true){
+            return true;
         }else{
-            var conf = confirm('You have selected '+payMethod+' as your preferred payment method.\nClick "OK" to continue.')
-            if(conf == true){
-                return true;
-            }else{
-                return false;
-            }
+            return false;
         }
+        // }
         
     }
 
-    $('input[name=payment_method]').on('change', function(){
-        $('#payment-method-error').html("");
-    })
+    // $('input[name=payment_method]').on('change', function(){
+    //     $('#payment-method-error').html("");
+    // })
 </script>
 
 {% endblock %}

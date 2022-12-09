@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool)
 
-ALLOWED_HOSTS = ['45.79.125.45', '127.0.0.1', 'fudanywer.ml', 'www.fudanywer.ml']
+ALLOWED_HOSTS = ['45.79.127.40', '127.0.0.1', 'fudanywer.ml', 'www.fudanywer.ml']
 
 
 # Application definition

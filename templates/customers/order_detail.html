@@ -26,6 +26,12 @@
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <h4 class="mt-2 mb-3">Order Details</h4>
+                                                    {% if order.status == 'New' %}
+                                                    <a onclick="return cancelConfirm();" href="#" id = "cancel" data-url="{% url 'cancel_order' order.order_number %}" class="btn btn-danger cancel_order">Cancel</a>
+                                                    {% else %}
+                                                    <b>{{order.status}}</b>
+                                                    {% endif %}
+                                                    <b id="new_status"></b>
                                                 </div>
                                                 <div class="col-md-6 text-left">
                                                     <p class="mb-0" style="text-transform: capitalize;">{{ order.name }}</p>
@@ -45,12 +51,7 @@
                                                 <div>
                                                     <span class="d-block">Order No: &nbsp&nbsp<span class="font-weight-bold">{{ order.order_number }}</span></span>
                                                 </div>
-                                                <div>
-                                                    <span class="d-block">Payment Method: &nbsp&nbsp<span class="font-weight-bold">{{ order.payment_method }}</span></span>
-                                                </div>
-                                                <div>
-                                                    <span class="d-block">Transaction ID: &nbsp&nbsp<span class="font-weight-bold">{{ order.payment.transaction_id }}</span></span>
-                                                </div>
+                                                
                                             </div>
                                             </div>
                                             <hr>
@@ -72,7 +73,7 @@
                             
                                             <div class="row mt-5">
                                                 <div class="d-flex justify-content-center col-md-6">
-                                                    <img src="{% static 'images/paid.png' %}" width="200">
+                                                    <img src="{% static 'images/ordered.png' %}" width="200">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <ul>
@@ -111,7 +112,7 @@
                                             <div class="d-flex justify-content-between">
                                                 <div>
                                                     <span class="d-block font-weight-bold">Thanks for ordering with us.</span>
-                                                    <span>FoodOnline Team</span>
+                                                    <span>FudAnyWer Team</span>
                                                 </div>
                                                 <div class="d-flex justify-content-end align-items-end">
                                                     <span class="d-block font-weight-bold">Need help?</span>&nbsp
@@ -132,5 +133,27 @@
 </div>
 <!-- Main Section End -->
 
+<script>
+    function cancelConfirm(){
+        // var payMethod = $("input[name='payment_method']:checked").val()
+        // if(!payMethod){
+        //     $('#payment-method-error').html("Select Payment Method!");
+        //     return false;
+        // }else{
+        // var conf = confirm('You have selected '+payMethod+' as your preferred payment method.\nClick "OK" to continue.')
+        var conf = confirm('Are you sure you want to cancel the order.\nClick "OK" to continue.')
+        if(conf == true){
+            return true;
+        }else{
+            return false;
+        }
+        // }
+        
+    }
+
+    // $('input[name=payment_method]').on('change', function(){
+    //     $('#payment-method-error').html("");
+    // })
+</script>
 
 {% endblock %}

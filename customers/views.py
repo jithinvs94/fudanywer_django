@@ -50,7 +50,9 @@ def order_detail(request, order_number):
         subtotal = 0
         for item in ordered_food:
             subtotal += (item.price * item.quantity)
-        tax_data = json.loads(order.tax_data)
+        tx_dt = json.loads(order.tax_data)
+        tx_dt = tx_dt.replace("'", '"')
+        tax_data = json.loads(tx_dt)
         context = {
             'order': order,
             'ordered_food': ordered_food,
@@ -60,4 +62,5 @@ def order_detail(request, order_number):
         return render(request, 'customers/order_detail.html', context)
     except:
         return redirect('customer')
+
     

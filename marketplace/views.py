@@ -36,7 +36,7 @@ def marketplace(request):
 
         pnt = GEOSGeometry('POINT(%s %s)' % (get_or_set_current_location(request)))
 
-        vendors = Vendor.objects.filter(user_profile__location__distance_lte=(pnt, D(km=1000))).annotate(distance=Distance("user_profile__location", pnt)).order_by("distance")
+        vendors = Vendor.objects.filter(is_approved=True, user_profile__location__distance_lte=(pnt, D(km=400))).annotate(distance=Distance("user_profile__location", pnt)).order_by("distance")
 
         for v in vendors:
             v.kms = round(v.distance.km, 1)
@@ -171,11 +171,11 @@ def search(request):
         # get vendor ids that has the food item the user is looking for
         fetch_vendors_by_fooditems = FoodItem.objects.filter(food_title__icontains=keyword, is_available=True).values_list('vendor', flat=True)
         
-        vendors = Vendor.objects.filter(Q(id__in=fetch_vendors_by_fooditems) | Q(vendor_name__icontains=keyword, is_approved=True, user__is_active=True))
+        vendors = Vendor.objects.filter(Q(id__in=fetch_vendors_by_fooditems, is_approved=True, user__is_active=True) | Q(vendor_name__icontains=keyword, is_approved=True, user__is_active=True))
         if latitude and longitude and radius:
             pnt = GEOSGeometry('POINT(%s %s)' % (longitude, latitude))
 
-            vendors = Vendor.objects.filter(Q(id__in=fetch_vendors_by_fooditems) | Q(vendor_name__icontains=keyword, is_approved=True, user__is_active=True),
+            vendors = Vendor.objects.filter(Q(id__in=fetch_vendors_by_fooditems, is_approved=True, user__is_active=True) | Q(vendor_name__icontains=keyword, is_approved=True, user__is_active=True),
             user_profile__location__distance_lte=(pnt, D(km=radius))
             ).annotate(distance=Distance("user_profile__location", pnt)).order_by("distance")
 

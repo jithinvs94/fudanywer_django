@@ -12,6 +12,7 @@ from django.template.defaultfilters import slugify
 from django.http import JsonResponse, HttpResponse
 from django.db import IntegrityError
 from orders.models import Order, OrderedFood
+import simplejson as json
 
 # Create your views here.
 
@@ -149,8 +150,9 @@ def add_food(request):
             foodtitle = form.cleaned_data['food_title']
             food = form.save(commit=False)
             food.vendor = get_vendor(request)
+            food.save()
             food.slug = slugify(foodtitle)+'-'+str(food.id)
-            form.save()
+            food.save()
             messages.success(request, 'Food Item added successfully!')
             return redirect('fooditems_by_category', food.category.id)
         else:
@@ -248,13 +250,18 @@ def order_detail(request, order_number):
     try:
         order = Order.objects.get(order_number=order_number, is_ordered=True)
         ordered_food = OrderedFood.objects.filter(order=order, fooditem__vendor=get_vendor(request))
+        subtotal = 0
+        tx_dt = json.loads(order.tax_data)
+        tx_dt = tx_dt.replace("'", '"')
+        tax_data = json.loads(tx_dt)
+        for food in ordered_food:
+            subtotal += food.price*food.quantity
 
         context = {
             'order': order,
             'ordered_food': ordered_food,
-            'subtotal': order.get_total_by_vendor()['subtotal'],
-            'tax_data': order.get_total_by_vendor()['tax_dict'],
-            'grand_total': order.get_total_by_vendor()['grand_total'],
+            'subtotal': subtotal,
+            'tax_data': tax_data,
         }
     except:
         return redirect('vendor')
@@ -263,7 +270,7 @@ def order_detail(request, order_number):
 
 def my_orders(request):
     vendor = Vendor.objects.get(user=request.user)
-    orders = Order.objects.filter(vendors__in=[vendor.id], is_ordered=True).order_by('created_at')
+    orders = Order.objects.filter(vendor=vendor, is_ordered=True).order_by('-created_at')
 
     context = {
         'orders': orders,

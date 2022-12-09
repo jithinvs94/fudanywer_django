@@ -28,13 +28,13 @@ def home(request):
 
         pnt = GEOSGeometry('POINT(%s %s)' % (get_or_set_current_location(request)))
 
-        vendors = Vendor.objects.filter(user_profile__location__distance_lte=(pnt, D(km=1000))).annotate(distance=Distance("user_profile__location", pnt)).order_by("distance")
+        vendors = Vendor.objects.filter(is_approved=True, user_profile__location__distance_lte=(pnt, D(km=400))).annotate(distance=Distance("user_profile__location", pnt)).order_by("distance")
 
         for v in vendors:
             v.kms = round(v.distance.km, 1)
     else:
     
-        vendors = Vendor.objects.filter(is_approved=True, user__is_active=True)[:8]
+        vendors = Vendor.objects.filter(is_approved=True, user__is_active=True)[:10]
     context = {
         'vendors': vendors,
     }
