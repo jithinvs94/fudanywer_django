@@ -8,7 +8,7 @@ from .forms import OrderForm
 from .models import Order, OrderedFood
 import simplejson as json
 from .utils import generate_order_number
-from accounts.utils import send_notification
+from accounts.utils import SendNotificationThread
 from django.contrib.auth.decorators import login_required
 import razorpay
 from fudanywer.settings import RZP_KEY_ID, RZP_KEY_SECRET
@@ -126,7 +126,8 @@ def place_order(request):
                     'tax_data': tax_data,
                     'vendor_grand_total': vendor_grand_total,
                     }
-                send_notification(mail_subject, mail_template, context)
+                # send_notification(mail_subject, mail_template, context)
+                SendNotificationThread(mail_subject, mail_template, context).start()
             cart_items.delete() 
         else:
             print(form.errors)
@@ -178,7 +179,8 @@ def place_order(request):
             'tax_data': tax_data,
             'totals': total_amount,
         }
-        send_notification(mail_subject, mail_template, context)
+        # send_notification(mail_subject, mail_template, context)
+        SendNotificationThread(mail_subject, mail_template, context).start()
 
         context = {
             'order': order,

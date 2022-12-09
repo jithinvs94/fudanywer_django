@@ -44,6 +44,7 @@ function onPlaceChanged (){
         }
     });
 
+    
     // loop through the address components and assign other address data
     console.log(place.address_components);
     for(var i=0; i<place.address_components.length; i++){
@@ -279,6 +280,116 @@ $(document).ready(function(){
             success: function(response){
                 if(response.status == 'success'){
                     document.getElementById('hour-'+response.id).remove()
+                }
+            }
+        })
+    })
+
+    $('.accept_order').on('click', function(e){
+        e.preventDefault();
+        
+        
+        url = $(this).attr('data-url');
+       
+        $.ajax({
+            type: 'GET',
+            url: url,
+            success: function(response){
+                console.log(response)
+                if(response.status == 'login_required'){
+                    swal(response.message, '', 'info').then(function(){
+                        window.location = '/login';
+                    })
+                }else if(response.status == 'Failed'){
+                    swal(response.message, '', 'error')
+                }else{
+                    $('#new_status').html(response.new_status);
+                    $('#accept').remove();
+                    $('#reject').remove();
+
+
+                }
+            }
+        })
+    })
+
+    $('.reject_order').on('click', function(e){
+        e.preventDefault();
+        
+        
+        url = $(this).attr('data-url');
+       
+        $.ajax({
+            type: 'GET',
+            url: url,
+            success: function(response){
+                console.log(response)
+                if(response.status == 'login_required'){
+                    swal(response.message, '', 'info').then(function(){
+                        window.location = '/login';
+                    })
+                }else if(response.status == 'Failed'){
+                    swal(response.message, '', 'error')
+                }else{
+                    $('#new_status').html(response.new_status);
+                    $('#accept').remove();
+                    $('#reject').remove();
+
+
+                }
+            }
+        })
+    })
+
+    $('.complete_order').on('click', function(e){
+        e.preventDefault();
+        
+        
+        url = $(this).attr('data-url');
+       
+        $.ajax({
+            type: 'GET',
+            url: url,
+            success: function(response){
+                console.log(response)
+                if(response.status == 'login_required'){
+                    swal(response.message, '', 'info').then(function(){
+                        window.location = '/login';
+                    })
+                }else if(response.status == 'Failed'){
+                    swal(response.message, '', 'error')
+                }else{
+                    $('#new_status').html(response.new_status);
+                    $('#complete').remove();
+
+
+                }
+            }
+        })
+    })
+
+    $('.cancel_order').on('click', function(e){
+        e.preventDefault();
+        
+        
+        url = $(this).attr('data-url');
+       
+        $.ajax({
+            type: 'GET',
+            url: url,
+            success: function(response){
+                console.log(response)
+                if(response.status == 'login_required'){
+                    swal(response.message, '', 'info').then(function(){
+                        window.location = '/login';
+                    })
+                }else if(response.status == 'Failed'){
+                    swal(response.message, '', 'error')
+                }else{
+                    $('#new_status').html(response.new_status);
+                    $('#cancel').remove();
+
+
                 }
             }
         })
