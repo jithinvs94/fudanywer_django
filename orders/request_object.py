@@ -1,4 +1,3 @@
-from . import models
 from vendor import models as vend_model
 
 def RequestObjectMiddleware(get_response):
@@ -7,7 +6,6 @@ def RequestObjectMiddleware(get_response):
     def middleware(request):
         # Code to be executed for each request before
         # the view (and later middleware) are called.
-        models.request_object = request
         vend_model.request_object = request
 
         response = get_response(request)

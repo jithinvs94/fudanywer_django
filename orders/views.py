@@ -1,5 +1,4 @@
-from urllib import response
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from marketplace.models import Cart, Tax
 from marketplace.context_processors import get_cart_amounts
@@ -10,14 +9,14 @@ import simplejson as json
 from .utils import generate_order_number
 from accounts.utils import SendNotificationThread
 from django.contrib.auth.decorators import login_required
-import razorpay
-from fudanywer.settings import RZP_KEY_ID, RZP_KEY_SECRET
+# import razorpay
+# from fudanywer.settings import RZP_KEY_ID, RZP_KEY_SECRET
 from django.contrib.sites.shortcuts import get_current_site
 from vendor.models import Vendor
 
 
 
-client = razorpay.Client(auth=(RZP_KEY_ID, RZP_KEY_SECRET))
+# client = razorpay.Client(auth=(RZP_KEY_ID, RZP_KEY_SECRET))
 
 
 
