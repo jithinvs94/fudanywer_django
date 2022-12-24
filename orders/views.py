@@ -88,10 +88,11 @@ def place_order(request):
                 order.total_tax = tax
                 order.save() # order id/ pk is generated
                 order.order_number = generate_order_number(order.id)
-                order_numbers.append(generate_order_number(order.id))
+                # order_numbers.append(generate_order_number(order.id))
                 order.vendor = Vendor.objects.get(pk=key1)
                 order.is_ordered = True
                 order.save()
+                order_numbers.append(order.order_number)
                 # MOVE THE CART ITEMS TO ORDERED FOOD MODEL
                 for item in cart_items:
                     if item.fooditem.vendor == order.vendor:

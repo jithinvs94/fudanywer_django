@@ -8,11 +8,12 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
-from vendor.models import Vendor
+from vendor.models import Vendor, Bill
 from django.template.defaultfilters import slugify
 from orders.models import Order
 import datetime
 from django.db.models import Q
+# from dateutil.relativedelta import relativedelta
 
 # Create your views here.
 
@@ -194,6 +195,12 @@ def vendorDashboard(request):
     for i in current_month_orders:
         current_month_revenue += i.total
     
+    month = datetime.datetime.now().month
+    try:
+        bill = Bill.objects.get(vendor=vendor, created_at__month=month)
+    except:
+        bill = None
+
 
     # total revenue
     total_revenue = 0
@@ -205,6 +212,7 @@ def vendorDashboard(request):
         'recent_orders': recent_orders,
         'total_revenue': total_revenue,
         'current_month_revenue': current_month_revenue,
+        'bill': bill,
     }
     return render(request, 'accounts/vendorDashboard.html', context)
 

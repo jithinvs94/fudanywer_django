@@ -94,3 +94,38 @@ class OpeningHour(models.Model):
 
     def __str__(self):
         return self.get_day_display()
+
+
+
+class Payment(models.Model):
+    PAYMENT_METHOD = (
+        ('PayPal', 'PayPal'),
+        ('RazorPay', 'RazorPay'), 
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    transaction_id = models.CharField(max_length=100)
+    payment_method = models.CharField(choices=PAYMENT_METHOD, max_length=100)
+    amount = models.CharField(max_length=10)
+    status = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.transaction_id
+
+
+class Bill(models.Model):
+    vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True)
+    bill_number = models.CharField(max_length=20)
+    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, blank=True, null=True)
+    payment_method = models.CharField(max_length=25, blank=True)
+    total_amount = models.FloatField()
+    is_payed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    def __str__(self):
+        return self.bill_number
+
+
+

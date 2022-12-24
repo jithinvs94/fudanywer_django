@@ -13,9 +13,16 @@ from django.http import JsonResponse, HttpResponse
 from django.db import IntegrityError
 from orders.models import Order, OrderedFood
 import simplejson as json
+import datetime
+from dateutil.relativedelta import relativedelta
+from .models import Bill, Vendor, Payment
+import razorpay
+from fudanywer.settings import RZP_KEY_ID, RZP_KEY_SECRET
 
 # Create your views here.
 
+
+client = razorpay.Client(auth=(RZP_KEY_ID, RZP_KEY_SECRET))
 
 def get_vendor(request):
     vendor = Vendor.objects.get(user=request.user)
@@ -276,3 +283,100 @@ def my_orders(request):
         'orders': orders,
     }
     return render(request, 'vendor/my_orders.html', context)
+
+
+@login_required(login_url='login')
+def bill_pay(request):
+    if request.method == 'GET':
+        vendor = Vendor.objects.get(user=request.user)
+        month = datetime.datetime.now().month
+        bill = Bill.objects.get(vendor=vendor, created_at__month=month)
+        previous_date = datetime.datetime.now() - relativedelta(months=1)
+        bill_month = previous_date.strftime("%B")
+        context = {
+            'bill': bill,
+            'bill_month': bill_month,
+        }
+        return render(request, 'vendor/payment_methods.html', context)
+    elif request.method == 'POST':
+        vendor = Vendor.objects.get(user=request.user)
+        month = datetime.datetime.now().month
+        bill = Bill.objects.get(vendor=vendor, created_at__month=month)
+        bill.payment_method = request.POST.get('payment_method')
+        bill.save()
+
+
+        # RazorPay Payment
+        DATA = {
+            "amount": float(bill.total_amount) * 100,
+            "currency": "INR",
+            "receipt": "receipt #"+bill.bill_number,
+            "notes": {
+                "key1": "value3",
+                "key2": "value2"
+            }
+        }
+        rzp_order = client.order.create(data=DATA)
+        rzp_order_id = rzp_order['id']
+        context = {
+            'bill': bill,
+            'vendor': vendor,
+            'rzp_order_id': rzp_order_id,
+            'RZP_KEY_ID': RZP_KEY_ID,
+            'rzp_amount': float(bill.total_amount) * 100,
+        }
+        return render(request, 'vendor/payment.html', context)
+
+
+@login_required(login_url='login')
+def payments(request):
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'POST':
+        # STORE THE PAYMENT DETAILS IN THE PAYMENT MODEL
+        bill_number = request.POST.get('bill_number')
+        transaction_id = request.POST.get('transaction_id')
+        payment_method = request.POST.get('payment_method')
+        status = request.POST.get('status')
+        vendor = Vendor.objects.get(user=request.user)
+        bill = Bill.objects.get(vendor=vendor, bill_number=bill_number)
+        payment = Payment(
+            user = request.user,
+            transaction_id = transaction_id,
+            payment_method = payment_method,
+            amount = bill.total_amount,
+            status = status
+        )
+        payment.save()
+
+        bill.payment = payment
+        if status == 'COMPLETED' or status == 'Success':
+            bill.is_payed = True
+        bill.save()
+
+        response = {
+            'bill_number': bill_number,
+            'transaction_id': transaction_id,
+        }
+        return JsonResponse(response)
+    return HttpResponse('Payments view')
+
+
+
+@login_required(login_url='login')
+def payment_complete(request):
+    bill_number = request.GET.get('bill_number')
+    transaction_id = request.GET.get('trans_id')
+
+    try:
+        bill = Bill.objects.get(bill_number=bill_number, payment__transaction_id=transaction_id, is_payed=True)
+        previous_date = datetime.datetime.now() - relativedelta(months=1)
+        bill_month = previous_date.strftime("%B")
+        context = {
+            'bill': bill,
+            'bill_month': bill_month,
+        }
+        return render(request, 'vendor/payment_complete.html', context)
+    except:
+        return redirect('home')
+
+
+

@@ -19,14 +19,41 @@
                         <div class="user-holder">
                             <h5 class="text-uppercase">Overview</h5>
                             <p class="text-right">Logged in as: <b>{{ user.email }}</b></p>
+                            {% if bill %}
                             <div class="row">
+                                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            Last Month Bill
+                                        </div>
+                                        {% if bill.total_amount == 0.0 %}
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">No dues</h5>
+                                        </div>
+                                        {% elif bill.is_payed == True %}
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">Bill Payed</h5>
+                                        </div>
+                                        {% else %}
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">{{ bill.total_amount | floatformat:2}}</h5>
+                                            <a href="{% url 'bill_pay' %}" class="btn btn-primary">Pay Now</a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <br><br> 
+                            {% endif %}
+                            <div class="row">
+                                
                                 <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
                                     <div class="card">
                                         <div class="card-header">
                                             Total Orders
                                         </div>
                                         <div class="card-body text-center">
-                                            <a href="#"><h5 class="card-title">{{ orders_count }}</h5></a>
+                                            <h5 class="card-title">{{ orders_count }}</h5>
                                         </div>
                                     </div>
                                 </div>
@@ -36,7 +63,7 @@
                                             Total Revenue
                                         </div>
                                         <div class="card-body text-center">
-                                            <a href="#"><h5 class="card-title">₹{{total_revenue | floatformat:2}}</h5></a>
+                                            <h5 class="card-title">₹{{total_revenue | floatformat:2}}</h5>
                                         </div>
                                     </div>
                                 </div>
@@ -46,7 +73,7 @@
                                             This Month
                                         </div>
                                         <div class="card-body text-center">
-                                            <a href="#"><h5 class="card-title">₹{{ current_month_revenue | floatformat:2}}</h5></a>
+                                            <h5 class="card-title">₹{{ current_month_revenue | floatformat:2}}</h5>
                                         </div>
                                     </div>
                                 </div>

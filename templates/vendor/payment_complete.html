@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'includes/_alerts.html' %}
+
+<!-- Main Section Start -->
+<div class="main-section">
+    {% include 'includes/_cover.html' %}
+    <div class="page-section account-header buyer-logged-in">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3 col-md-3 col-sm-12 col-xs-12">
+                    <!-- Load the sidebar here -->
+                    {% include 'includes/v_sidebar.html' %}
+                </div>
+                <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                    <h4 class="mt-2 mb-3">Thank you for your Payment.</h4>
+                    <h6>Hello {{ bill.vendor.user.first_name }}, </h6><span>Your bill payment is complete</span>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-12 text-left">
+                            <div>
+                                <span class="d-block">Bill Number: &nbsp&nbsp<span class="font-weight-bold">{{ bill.bill_number }}</span></span>
+                            </div>
+                            <div>
+                                <span class="d-block">Month: &nbsp&nbsp<span class="font-weight-bold">{{ bill_month }}</span></span>
+                            </div>
+                            <div>
+                                <span class="d-block">Amount: &nbsp&nbsp<span class="font-weight-bold">{{ bill.total_amount }}</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <span class="d-block font-weight-bold">Thanks for partnering with us.</span>
+                            <span>FudAnyWer Team</span>
+                        </div>
+                        <div class="d-flex justify-content-end align-items-end">
+                            <span class="d-block font-weight-bold">Need help?</span>&nbsp
+                            <span>Call - +91 0011223344</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Main Section End -->
+
+
+{% endblock %}
